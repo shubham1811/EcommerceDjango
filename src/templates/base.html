@@ -1,0 +1,92 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% include 'base/css.html'%}
+    {% block base_head %}{% endblock %}
+    <title>Bootstrap 101 Template</title>
+  </head>
+  <body>
+    {% include 'base/navbar.html' with brand_name='eCommerce'  %}
+    <div class="container">
+      {% block content %}{% endblock %}
+    </div>
+    {% include 'base/js.html' %}
+
+    <script>
+      $(document).ready(function(){
+        var productForm = $(".form-product-ajax")
+        productForm.submit(function(event){
+          event.preventDefault();
+          var thisForm = $(this)
+          // var actionEndpoint=  thisForm.attr("action"); // API ENDPOINT
+          var httpMethod= thisForm.attr("method");
+          var formData = thisForm.serialize();
+          var actionEndpoint= thisForm.attr("data-endpoint");
+
+          $.ajax({
+            url: actionEndpoint,
+            method: httpMethod,
+            data: formData,
+            success: function(data){
+              var submitSpan = thisForm.find(".submit-span")
+              if (data.added){
+                submitSpan.html("In cart <button type='submit' class='btn btn-link'>Remove?</button>")
+              }
+              else {
+                submitSpan.html("<button type='submit'  class='btn btn-success'>Add to cart</button>")
+              }
+              var navbarCount =$(".navbar-cart-count")
+              navbarCount.text(data.cartItemCount)
+              var currentPath = window.location.href
+              if(currentPath.indexOf("cart") != -1)
+              {
+                refreshCart()
+              }
+            },
+            error: function(errordata){
+              console.log("error")
+              console.log(errorData)
+            }
+          })
+
+        })
+        function refreshCart(){
+          var cartTable = $(".cart-table")
+          var cartBody = cartTable.find(".cart-body")
+          //cartBody.html("<h1>Changed</h1>")
+          var productRows = cartBody.find(".cart-product")
+          var currentUrl = window.location.href
+
+          var refreshCartUrl = '/api/cart'
+          var refreshCartMethod = "GET";
+          var data = {};
+          $.ajax({
+            url:refreshCartUrl,
+            method:refreshCartMethod,
+            data:data,
+            success: function(data){
+              console.log(data)
+              if(data.products.length > 0)
+              {
+                productRows.html("<tr><td colspan=3>Coming Soon</td></tr>")
+                cartBody.find(".cart-subtotal").text(data.subtotal)
+                cartBody.find(".cart-total").text(data.total)
+              }
+              else{
+                window.location.href = currentUrl
+              }
+            },
+            error : function(errorData){
+              console.log("error")
+              console.log(errorData)
+            }
+          })
+        }
+      })
+    </script>
+  </body>
+</html>
